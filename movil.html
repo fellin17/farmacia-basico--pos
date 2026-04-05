@@ -148,7 +148,7 @@ body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--
 <body>
 
 <!-- ═══ PANTALLA DE LOGIN ═══ -->
-<div id="loginScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0369a1,#0d9488);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px">
+<div id="loginScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0369a1,#0d9488);align-items:center;justify-content:center;flex-direction:column;padding:24px">
   <div style="text-align:center;margin-bottom:28px">
     <div style="font-size:56px;margin-bottom:8px">💊</div>
     <div style="color:white;font-size:22px;font-weight:800">Farmacia POS</div>
@@ -178,7 +178,7 @@ body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--
 </div>
 
 <!-- ═══ PANTALLA BLOQUEADA ═══ -->
-<div id="blockedScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#dc2626,#991b1b);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;text-align:center">
+<div id="blockedScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#dc2626,#991b1b);align-items:center;justify-content:center;flex-direction:column;padding:24px;text-align:center">
   <div style="font-size:64px;margin-bottom:16px">🔒</div>
   <div style="color:white;font-size:22px;font-weight:800;margin-bottom:8px">Acceso Bloqueado</div>
   <div style="color:rgba(255,255,255,0.85);font-size:14px;max-width:300px;line-height:1.6;margin-bottom:24px" id="blockedMsg">
@@ -716,6 +716,7 @@ async function iniciarSesion() {
     // Guardar sesión local
     localStorage.setItem('pos_session', JSON.stringify({ user, deviceId, plan: lic.plan||'basico' }));
     window._posSession = { user, deviceId, plan: lic.plan||'basico' };
+    iniciarVigilanciaDispositivo(user, deviceId);
 
     // Activar plan
     activarPlan(lic.plan||'basico');
@@ -750,6 +751,21 @@ function activarPlan(plan) {
 
 function bloqueadoIA() {
   toast('🔒 Función exclusiva del Plan Pro. Contacta a tu proveedor para activarla.', 'error');
+}
+
+// ─── VIGILANCIA EN TIEMPO REAL ────────────────────────────────────────────────
+function iniciarVigilanciaDispositivo(user, deviceId) {
+  if (!fbReady) return;
+  fbLic.doc(user).onSnapshot((snap) => {
+    if (!snap.exists) return;
+    const lic = snap.data();
+    if (!lic.activa || (lic.dispositivoActivo && lic.dispositivoActivo.id !== deviceId)) {
+      const nombre = lic.dispositivoActivo?.nombre || 'otro dispositivo';
+      document.getElementById('blockedScreen').style.display = 'flex';
+      document.getElementById('blockedMsg').textContent =
+        'Tu sesión fue tomada por ' + nombre + '. Contacta a tu proveedor para recuperar acceso.';
+    }
+  });
 }
 
 function cerrarSesionYReintentar() {
@@ -792,6 +808,7 @@ async function verificarSesionGuardada() {
           dispositivoActivo: { id: sesion.deviceId, nombre: getDeviceName(), fecha: new Date().toISOString(), user: sesion.user }
         });
         window._posSession = sesion;
+        iniciarVigilanciaDispositivo(sesion.user, sesion.deviceId);
         activarPlan(lic.plan || sesion.plan || 'basico');
         await loadData();
         document.getElementById('syncStatus').textContent = '🟢 Licencia activa';
