@@ -268,6 +268,8 @@ body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--
     💊 Próximos a caducar
   </button>
 
+
+
   <!-- Panel Próximos a caducar -->
   <div id="caducarPanel" style="display:none;margin-bottom:12px">
     <div class="card">
@@ -499,6 +501,17 @@ body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--
       </div>
 
       <div id="pMargen" style="display:none;background:var(--green-light);border:1.5px solid var(--green);border-radius:8px;padding:10px 14px;font-weight:700;color:var(--green);font-size:14px;margin-bottom:12px"></div>
+
+      <!-- BOTÓN IA: CATEGORIZACIÓN AUTOMÁTICA -->
+      <button onclick="if(window._plan!=='pro'){bloqueadoIA();return;}"
+        class="btn-ia"
+        style="width:100%;margin-bottom:10px;padding:14px;background:linear-gradient(135deg,#7c3aed,#a21caf);color:white;border:none;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:10px;opacity:0.65">
+        <span style="font-size:22px">🏷️</span>
+        <div style="text-align:left">
+          <div>Categorizar con IA</div>
+          <div style="font-size:11px;font-weight:400;opacity:0.9">💎 Plan Pro — Medicamento · Higiene · Cosmético · Suplemento</div>
+        </div>
+      </button>
 
       <button class="btn btn-green" onclick="guardarProducto()">💾 Guardar Producto</button>
       <button class="btn btn-ghost" onclick="limpiarFormProducto()">🗑️ Limpiar</button>
