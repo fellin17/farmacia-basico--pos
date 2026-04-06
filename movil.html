@@ -262,6 +262,23 @@ body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--
     </div>
   </div>
 
+  <!-- Botón Próximos a caducar -->
+  <button onclick="toggleCaducar()"
+    style="width:100%;margin-bottom:12px;padding:12px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px">
+    💊 Próximos a caducar
+  </button>
+
+  <!-- Panel Próximos a caducar -->
+  <div id="caducarPanel" style="display:none;margin-bottom:12px">
+    <div class="card">
+      <div class="card-title" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;display:flex;justify-content:space-between;align-items:center">
+        💊 Próximos a caducar
+        <button onclick="toggleCaducar()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px">✕</button>
+      </div>
+      <div id="caducarList"></div>
+    </div>
+  </div>
+
   <!-- Botón Reporte de Inventario -->
   <button onclick="generarReporteInventario()"
     style="width:100%;margin-bottom:12px;padding:13px;background:linear-gradient(135deg,#0369a1,#0d9488);color:white;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px">
@@ -1214,6 +1231,76 @@ function renderInventario() {
       <div class="product-price">$${p.sellPrice.toFixed(2)}</div>
     </div>`;
   }).join('')}</div>`;
+}
+
+// ─── PRÓXIMOS A CADUCAR ───────────────────────────────────────────────────────
+function toggleCaducar() {
+  const panel = document.getElementById('caducarPanel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) renderCaducar();
+}
+
+function renderCaducar() {
+  const el = document.getElementById('caducarList');
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  // Solo productos con fecha de caducidad, ordenados ascendente
+  const conFecha = products
+    .filter(p => p.caducidad)
+    .map(p => {
+      const fecha = new Date(p.caducidad + 'T00:00:00');
+      const diffMs = fecha - hoy;
+      const dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      return { ...p, fechaObj: fecha, dias };
+    })
+    .sort((a, b) => a.fechaObj - b.fechaObj);
+
+  const sinFecha = products.filter(p => !p.caducidad);
+
+  if (!conFecha.length && !sinFecha.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px"><p>Sin productos en inventario</p></div>';
+    return;
+  }
+
+  if (!conFecha.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px"><p>Ningún producto tiene fecha de caducidad registrada</p></div>';
+    return;
+  }
+
+  el.innerHTML = conFecha.map(p => {
+    let color, bg, etiqueta;
+    if (p.dias < 0) {
+      color = '#dc2626'; bg = '#fee2e2'; etiqueta = '💀 Caducado hace ' + Math.abs(p.dias) + ' día(s)';
+    } else if (p.dias === 0) {
+      color = '#dc2626'; bg = '#fee2e2'; etiqueta = '🚨 Caduca HOY';
+    } else if (p.dias <= 7) {
+      color = '#dc2626'; bg = '#fee2e2'; etiqueta = '🔴 ' + p.dias + ' día(s)';
+    } else if (p.dias <= 30) {
+      color = '#ea580c'; bg = '#fff7ed'; etiqueta = '🟠 ' + p.dias + ' día(s)';
+    } else if (p.dias <= 90) {
+      color = '#d97706'; bg = '#fefce8'; etiqueta = '🟡 ' + p.dias + ' día(s)';
+    } else {
+      color = '#059669'; bg = '#d1fae5'; etiqueta = '🟢 ' + p.dias + ' día(s)';
+    }
+    const fechaStr = p.fechaObj.toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' });
+    const stockTag = p.stock === 0
+      ? '<span class="tag tag-red">Sin stock</span>'
+      : p.stock <= 3
+      ? `<span class="tag tag-orange">⚠ ${p.stock} pzs</span>`
+      : `<span class="tag tag-green">${p.stock} pzs</span>`;
+    return `<div class="product-item" style="border-left:4px solid ${color}">
+      <div style="flex:1">
+        <div class="product-name">${p.name}</div>
+        <div class="product-meta">Cad: ${fechaStr} · ${stockTag}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="background:${bg};color:${color};border-radius:6px;padding:3px 8px;font-size:11px;font-weight:800;white-space:nowrap">${etiqueta}</div>
+        <div class="product-price" style="font-size:13px;margin-top:4px">$${p.sellPrice.toFixed(2)}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ─── VENTA MÓVIL ──────────────────────────────────────────────────────────────
