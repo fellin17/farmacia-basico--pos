@@ -655,6 +655,17 @@ body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--
 <div id="toast"></div>
 
 <script>
+// ─── PROTECCIÓN DE CÓDIGO ─────────────────────────────────────────────────────
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if (
+    e.key === 'F12' ||
+    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+    (e.ctrlKey && e.key === 'u') ||
+    (e.ctrlKey && e.key === 'U')
+  ) { e.preventDefault(); return false; }
+});
+
 // ─── CLICK SOUND ─────────────────────────────────────────────────────────────
 document.addEventListener('click', function(e) {
   if (!e.target.closest('button')) return;
